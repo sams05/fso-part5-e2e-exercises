@@ -8,6 +8,10 @@ const login = async (page, username, password) => {
   await loginBtn.click()
 }
 
+const logout = async (page) => {
+  await page.getByRole('button', { name: 'logout' }).click()
+}
+
 const createBlog = async (page, blogToAdd) => {
   await page.getByRole('button', { name: 'create new blog' }).click()
   await page.locator('#title').fill(blogToAdd.title)
@@ -16,4 +20,10 @@ const createBlog = async (page, blogToAdd) => {
   await page.getByRole('button', { name: 'create' }).click()
 }
 
-module.exports = { login, createBlog }
+const expandBlogByTitle = async (page, blogTitle) => {
+  const blogContainer = page.getByTestId('blog').filter({ hasText: blogTitle })
+  await blogContainer.getByRole('button', { name: 'view' }).click()
+  return blogContainer
+}
+
+module.exports = { login, logout, createBlog, expandBlogByTitle }

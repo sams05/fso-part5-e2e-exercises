@@ -67,8 +67,7 @@ describe('Blog app', () => {
       })
 
       test('blog can be edited', async ({ page }) => {
-        const blogContainer = page.getByTestId('blog').filter({ hasText: blog.title })
-        await blogContainer.getByRole('button', { name: 'view' }).click()
+        const blogContainer = await helper.expandBlogByTitle(page, blog.title)
 
         const blogLikes = blogContainer.getByText('likes')
         const numLikesBefore = +(await blogLikes.textContent()).match(/\d+/)[0]
@@ -79,14 +78,33 @@ describe('Blog app', () => {
         await expect(blogLikes).toContainText(`likes ${numLikesBefore + 1}`)
       })
 
-      test.only('blog can be deleted', async ({page}) => {
-        const blogContainer = page.getByTestId('blog').filter({ hasText: blog.title })
-        await blogContainer.getByRole('button', { name: 'view' }).click()
+      test('blog can be deleted', async ({ page }) => {
+        const blogContainer = await helper.expandBlogByTitle(page, blog.title)
 
         // Confirm deletion with the modal
-        page.on('dialog', dialog => dialog.accept())
+        page.on('dialog', (dialog) => dialog.accept())
         await blogContainer.getByRole('button', { name: 'remove' }).click()
         await expect(blogContainer).not.toBeVisible()
+      })
+
+      test("delete button only visible to blog's creator", async ({ page, request }) => {
+        let blogContainer = await helper.expandBlogByTitle(page, blog.title)
+        // Make sure user can see delete button
+        await expect(blogContainer.getByRole('button', { name: 'remove' })).toBeVisible()
+        await helper.logout(page)
+
+        // Log into another account
+        await request.post('/api/users', {
+          data: {
+            name: 'Eve',
+            username: 'evie',
+            password: 'password',
+          },
+        })
+        await helper.login(page, 'evie', 'password')
+        blogContainer = await helper.expandBlogByTitle(page, blog.title)
+        // Make sure other user can't see the delete button
+        await expect(blogContainer.getByRole('button', { name: 'remove' })).not.toBeVisible()
       })
     })
   })
