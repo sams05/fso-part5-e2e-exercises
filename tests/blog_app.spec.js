@@ -3,8 +3,8 @@ const helper = require('./testing_helper')
 
 describe('Blog app', () => {
   beforeEach(async ({ page, request }) => {
-    await request.post('http:localhost:3003/api/testing/reset')
-    await request.post('http://localhost:3003/api/users', {
+    await request.post('/api/testing/reset')
+    await request.post('/api/users', {
       data: {
         name: 'Matti Luukkainen',
         username: 'mluukkai',
@@ -12,7 +12,7 @@ describe('Blog app', () => {
       },
     })
 
-    await page.goto('http://localhost:5173')
+    await page.goto('/')
   })
 
   test('Login form is shown', async ({ page }) => {
@@ -57,17 +57,17 @@ describe('Blog app', () => {
     })
 
     describe('When user has a blog', () => {
-      const blogToAdd = {
+      const blog = {
         title: 'Best Blog Ever',
         author: 'John Doe',
         url: 'example.com',
       }
       beforeEach(async ({ page }) => {
-        await helper.createBlog(page, blogToAdd)
+        await helper.createBlog(page, blog)
       })
 
-      test.only('blog can be edited', async ({ page }) => {
-        const blogContainer = page.getByTestId('blog').filter({ hasText: blogToAdd.title })
+      test('blog can be edited', async ({ page }) => {
+        const blogContainer = page.getByTestId('blog').filter({ hasText: blog.title })
         await blogContainer.getByRole('button', { name: 'view' }).click()
 
         const blogLikes = blogContainer.getByText('likes')
@@ -77,6 +77,16 @@ describe('Blog app', () => {
         await likeBtn.click()
 
         await expect(blogLikes).toContainText(`likes ${numLikesBefore + 1}`)
+      })
+
+      test.only('blog can be deleted', async ({page}) => {
+        const blogContainer = page.getByTestId('blog').filter({ hasText: blog.title })
+        await blogContainer.getByRole('button', { name: 'view' }).click()
+
+        // Confirm deletion with the modal
+        page.on('dialog', dialog => dialog.accept())
+        await blogContainer.getByRole('button', { name: 'remove' }).click()
+        await expect(blogContainer).not.toBeVisible()
       })
     })
   })
