@@ -8,4 +8,12 @@ const login = async (page, username, password) => {
   await loginBtn.click()
 }
 
-module.exports = { login }
+const createBlog = async (page, blogToAdd) => {
+  await page.getByRole('button', { name: 'create new blog' }).click()
+  await page.locator('#title').fill(blogToAdd.title)
+  await page.locator('#author').fill(blogToAdd.author)
+  await page.locator('#url').fill(blogToAdd.url)
+  await page.getByRole('button', { name: 'create' }).click()
+}
+
+module.exports = { login, createBlog }
